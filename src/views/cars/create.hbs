@@ -1,0 +1,39 @@
+<div class="row justify-content-center">
+    <div class="col col-8">
+        <h2 class="text-center"> Create Car </h2>
+        <form action="/cars/store" method="post">
+            <div class="form-group">
+                <label for="carName"> CarName: </label>
+                <input type="text" class="form-control" name="carName" placeholder="CarName" id="carName">
+            </div>
+            <div class="form-group">
+                <label for="carImage"> CarImage: </label>
+                <input type="text" class="form-control" name="carImage" placeholder="CarImage" id="carImage">
+            </div>
+            <div class="form-group">
+                <label for="carManufacture"> CarManufacture: </label>
+                <input type="text" class="form-control" name="carManufacture" placeholder="CarManufacture" id="carManufacture">
+            </div>
+            <div class="form-group">
+                <label for="carEngine"> CarEngine: </label>
+                <input type="text" class="form-control" name="carEngine" placeholder="CarEngine" id="carEngine">
+            </div>
+            <div class="form-group">
+                <label for="carPower"> CarPower: </label>
+                <input type="text" class="form-control" name="carPower" placeholder="CarPower" id="carPower">
+            </div>
+            <div class="form-group">
+                <label for="carPrice"> CarPrice: </label>
+                <input type="text" class="form-control" name="carPrice" placeholder="CarPrice" id="carPrice">
+            </div>
+            <div class="form-group">
+                <label for="carTopSpeed"> CarTopSpeed: </label>
+                <input type="text" class="form-control" name="carTopSpeed" placeholder="CarTopSpeed" id="carTopSpeed">
+            </div>
+            <div class="form-group">
+                <p class="text-danger"> {{message}} </p>
+            </div>
+            <button type="submit" class="btn btn-primary"> Create </button>
+        </form>
+    </div>
+</div>
