@@ -3,6 +3,7 @@ const path = require('path');
 
 // npm module
 const express = require('express');
+const { engine } = require("express-handlebars");
 const expressHandlebars = require('express-handlebars');
 const flash = require('express-flash');
 const session = require('express-session');
@@ -19,10 +20,29 @@ const database = require('./repository/mongo/config/index');
 const viewsDirectoryPath = path.join(__dirname, './views');
 const publicDirectoryPath = path.join(__dirname, './public');
 
+app.engine(
+    "hbs",
+    engine({
+      extname: ".hbs",
+    })
+);
+
+app.set("view engine", "hbs");
+app.set("views", "views");
+
 // express config body-parser
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 
+//session
+app.use(
+    session({
+      secret: "abc",
+      resave: true,
+      saveUninitialized: true,
+      cookie: { maxAge: 60000 * 30 },
+    })
+  );
 //mvc models
 route(app);
 

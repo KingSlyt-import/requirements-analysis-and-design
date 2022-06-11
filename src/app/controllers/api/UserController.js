@@ -13,7 +13,7 @@ class UsersController {
 
     // [POST] /api/users/register
     registerProcess(req, res, next) {
-        const {username, phone, fullName, birthDate, address} = req.body;
+        const {email, password, username} = req.body;
 
         UserModel.findOne({email})
             .then(user => {
@@ -24,27 +24,22 @@ class UsersController {
                     });
                 }
             })
-            .then(() => User.findOne({phone}))
+            .then(() => UserModel.findOne({username}))
             .then(user => {
                 if (user) {
                     return Promise.reject({
                         code: 3,
-                        message: `Số điện thoại đã tồn tại`
+                        message: `Tên tài khoản đã tồn tại`
                     });
                 }
             })
             .then(() => bcrypt.hash(password, 10))
             .then((hashed) => {
-                let user = new User({
-                    phone,
+                
+                let user = new UserModel({
                     email,
-                    fullName,
-                    birthDate: new Date(birthDate + 'Z').toISOString(),
-                    address,
-                    username,
-                    idCardFront: `/img/users/${username}/idCardFront.png`,
-                    idCardBack: `/img/users/${username}/idCardBack.png`,
-                    password: hashed
+                    password: hashed,
+                    username
                 });
                 user.save()
                     .then(() => {
@@ -62,174 +57,54 @@ class UsersController {
                         })
                     })
             })
-            .then(() => {
-                let mailData = {
-                    title: 'Register',
-                    to: email,
-                    data: {
-                        username,
-                        password
-                    }
-                }
-                sendMail.sendMail(mailData);
-            })
             .catch(err => {
-                return res.json(err)
+                return res.json({
+                    code: 2,
+                    message: err.message
+                });
             })
         return;
     }
 
     // [POST] /api/users/login
     loginProcess(req, res, next) {
-        let result = validationResult(req);
-        if (result.errors.length === 0) {
-            let {username, password} = req.body;
-            let user = undefined;
+        let {email, password} = req.body;
+        let user = undefined;
 
-            User.findOne({username})
-                .then(acc => {
-                    if (!acc) {
-                        return Promise.reject({
-                            code: 3,
-                            message: 'Sai tên tài khoản'
-                        });
-                    }
-                    user = acc;
-
-                    return bcrypt.compare(password, acc.password);
-                })
-                .then(passwordMatch => {
-                    if (user.status === 'disabled') {
-                        return res.json({
-                            code: 3,
-                            message: 'Tài khoản này đã bị vô hiệu hóa, vui lòng liên hệ tổng đài 18001008'
-                        });
-                    }
-
-                    if (user.softDisabled) {
-                        return res.json({
-                            code: 3,
-                            message: 'Tài khoản đã bị vô hiệu hóa do nhập sai mật khẩu nhiều lần, vui lòng liên hệ quản trị viên để được hỗ trợ'
-                        });
-                    }
-
-                    if (!user.softDisabled && user.loginAttempt.penalty === true) {
-                        let timeLeft = Date.now() - user.loginAttempt.lastTime;
-                        if (timeLeft <= 60000) {
-                            return res.json({
-                                code: 2,
-                                message: 'Tài khoản hiện tại đang bị tạm khóa, vui lòng thử lại sau 1 phút'
-                            });
-                        }
-                    }
-                    
-                    if (!passwordMatch) {
-                        if (user.role !== 'admin') {
-                            let dataUpdate = undefined;
-                            if (user.loginAttempt.count >= 2) {
-                                if (user.loginAttempt.penalty === true) {
-                                    dataUpdate = {
-                                        softDisabled: true
-                                    };
-                                } else {
-                                    dataUpdate = {
-                                        loginAttempt: {
-                                            count: 0,
-                                            lastTime: new Date(),
-                                            penalty: true
-                                        }
-                                    };
-                                }
-                            } else {
-                                dataUpdate = {
-                                    loginAttempt: {
-                                        ...user.loginAttempt,
-                                        count: user.loginAttempt.count + 1,
-                                    }
-                                };
-                            }
-                            User.findOneAndUpdate({_id: user._id}, dataUpdate) 
-                                .then(userUpdate => {
-                                    if (userUpdate) {
-                                        return res.status(401).json({
-                                            code: 3,
-                                            message: 'Đăng nhập thất bại, mật khẩu không chính xác'
-                                        });
-                                    }
-                                    return res.json({
-                                        code: 0,
-                                        message: 'Không tìm thấy username'
-                                    });
-                                })
-                                .catch(err => {
-                                    return res.json({
-                                        code: 3,
-                                        message: err.message
-                                    });
-                                });
-                            return;
-                        } else {
-                            return res.status(401).json({
-                                code: 3,
-                                message: 'Đăng nhập thất bại, mật khẩu không chính xác'
-                            });
-                        }
-                    }
-                    else {
-                        const {JWT_SECRET_KEY} = process.env;
-                        jwt.sign({
-                            id : user._id,
-                            username: user.username,
-                            email: user.email,
-                            phone: user.phone,
-                            role: user.role,
-                            status: user.status,
-                            firstLog: user.firstLog
-                        }, JWT_SECRET_KEY ,{
-                            expiresIn: '1h'
-                        }, (err, token) => {
-                            if (err) throw err;
-                            User.findOneAndUpdate({_id: user._id}, {
-                                loginAttempt: {
-                                    count: 0,
-                                    lastTime: new Date(),
-                                    penalty: false
-                                }
-                            })
-                                .then(() => {
-                                    return res.json({
-                                        code: 0,
-                                        message: 'Đăng nhập thành công',
-                                        token: token
-                                    });
-                                })
-                                .catch(err => {
-                                    return res.json({
-                                        code: 0,
-                                        message: err.message
-                                    });
-                                });
-                        });
-                    }
-                })
-                .catch(err => {
-                    return res.status(401).json({
-                        code: 2,
-                        message: 'Đăng nhập thất bại'
+        UserModel.findOne({email})
+            .then(acc => {
+                if (!acc) {
+                    return Promise.reject({
+                        code: 3,
+                        message: 'Sai tài khoản hoặc mật khẩu, vui lòng đăng nhập lại'
                     });
-                })
-            return;
-        }
-        let messages = result.mapped();
-        let message = '';
-        for(let mess in messages) {
-            message  = messages[mess].msg;
-            break
-        }
-        return res.json({
-            code: 1,
-            message
-        });
+                }
+                user = acc;
+
+                return bcrypt.compare(password, acc.password);
+            })
+            .then(passwordMatch => {
+                if (!passwordMatch) {
+                    return Promise.reject({
+                        code: 3,
+                        message: 'Sai tài khoản hoặc mật khẩu, vui lòng đăng nhập lại'
+                    });
+                }
+
+                req.session.user = user;
+                return res.json({
+                    code: 0,
+                    message: 'Đăng nhập thành công',
+                    data: user
+                });
+            })
+            .catch(err => {
+                return res.json({
+                    code: 2,
+                    message: err.message
+                });
+            })
+        return;
     }
 
     // [GET] /api/users/getUserByUs/:us
@@ -302,83 +177,78 @@ class UsersController {
 
     // [PUT] /api/users/changePassword/:username
     changePassword(req, res, next) {
-        let result = validationResult(req);
-        if (result.errors.length === 0) {
-            let {oldPassword, newPassword} = req.body;
-            let username = req.params.username;
-            let userG = undefined;
-            let isMatch = false;
-            User.findOne({username})
+
+        let {oldPassword, newPassword, confirmPassword} = req.body;
+        let username = req.params.username;
+        let userG = undefined;
+        let isMatch = false;
+
+        if (newPassword !== confirmPassword) {
+            return res.json({
+                code: 3,
+                message: 'Mật khẩu xác nhận phải trùng với mật khẩu mới'
+            })
+        }
+        
+        UserModel.findOne({username})
             .then(user => {
-                    if (user) {
-                        userG = user
-                        return bcrypt.compare(oldPassword, user.password);
-                    }
-                    return res.json({
-                        code: 0,
+                if (!user) {
+                    return Promise.reject({
+                        code: 3,
                         message: 'Không tìm thấy User'
                     });
-                })
-                .then(passwordMatch => {
-                    if (!passwordMatch) {
-                        isMatch = true;
-                        return res.status(401).json({
-                            code: 3,
-                            message: 'Sai mật khẩu'
-                        });
-                    }
-                    return bcrypt.hash(newPassword, 10);
-                })
-                .then(hash => {
-                    if (isMatch) return;
-                    userG.password = hash;
-                    
-                    User.findByIdAndUpdate(userG._id, userG)
-                        .then(userUpdate => {
-                            if (!userUpdate) {
-                                return res.status(401).json({
-                                    code: 3,
-                                    message: 'Đăng nhập thất bại, mật khẩu không chính xác'
-                                });
-                            }
-                            return res.json({
-                                code: 0,
-                                message: 'Cập nhật Password thành công'
-                            });
-                        })
-                        .catch(err => {
-                            return res.json({
-                                code: 3,
-                                message: err.message
-                            });
-                        });
-                    return;
-                })
-                .catch(err => {
-                    if (err.message.includes('Cast to ObjectId failed')) {
-                        return res.json({
-                            code: 3,
-                            message: 'Không phải Id hợp lệ'
-                        });
-                    }
+                }
+                
+                userG = user
+                return bcrypt.compare(oldPassword, user.password);
+            })
+            .then(passwordMatch => {
+                if (!passwordMatch) {
+                    isMatch = true;
                     return res.json({
                         code: 3,
-                        message: err.message
+                        message: 'Sai mật khẩu'
                     });
+                }
+                return bcrypt.hash(newPassword, 10);
+            })
+            .then(hash => {
+                if (isMatch) return;
+                userG.password = hash;
+                
+                UserModel.findByIdAndUpdate(userG._id, userG)
+                    .then(userUpdate => {
+                        if (!userUpdate) {
+                            return res.json({
+                                code: 3,
+                                message: 'Đăng nhập thất bại, mật khẩu không chính xác'
+                            });
+                        }
+                        return res.json({
+                            code: 0,
+                            message: 'Cập nhật Password thành công'
+                        });
+                    })
+                    .catch(err => {
+                        return res.json({
+                            code: 3,
+                            message: err.message
+                        });
+                    });
+                return;
+            })
+            .catch(err => {
+                if (err.message.includes('Cast to ObjectId failed')) {
+                    return res.json({
+                        code: 3,
+                        message: 'Không phải Id hợp lệ'
+                    });
+                }
+                return res.json({
+                    code: 3,
+                    message: err.message
                 });
-        }
-        else {
-            let messages = result.mapped();
-            let message = '';
-            for(let mess in messages) {
-                message  = messages[mess].msg;
-                break
-            }
-            return res.json({
-                code: 1,
-                message
             });
-        }
     }
 
     // [POST] /api/users/resetPassword
