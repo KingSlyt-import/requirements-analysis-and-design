@@ -3,20 +3,16 @@
         <h2 class="text-center">Register</h2>
         <form action="/users/register" method="post">
             <div class="form-group">
-                <label for="username">Username:</label>
-                <input type="text" class="form-control" name="username" placeholder="Username" id="username">
+                <label for="username">Email:</label>
+                <input type="email" class="form-control" name="email" placeholder="Enter email" id="email">
             </div>
             <div class="form-group">
                 <label for="pwd">Password:</label>
-                <input type="password" class="form-control" name="password" placeholder="Enter password" id="pwd">
+                <input type="password" class="form-control" name="password" placeholder="Enter password" id="password">
             </div>
             <div class="form-group">
-                <label for="repeatPwd">Repeat Password:</label>
-                <input type="password" class="form-control" name="confirmPassword" placeholder="Enter repeat password" id="repeatPwd">
-            </div>
-            <div class="form-group">
-                <label for="Name">Name:</label>
-                <input type="text" class="form-control" name="name" placeholder="Enter Your name" id="Name">
+                <label for="Name">Username:</label>
+                <input type="text" class="form-control" name="username" placeholder="Enter Your username" id="username">
             </div>
             <div class="form-group">
                 <p class="text-danger">{{message}}</p>

@@ -1,14 +1,14 @@
+const fetch = require("node-fetch");
+const formidable = require('formidable');
+
 const BASE_URL = process.env.BASE_URL || "http://localhost";
 const PORT = process.env.PORT || "";
-const HOST = BASE_URL + (PORT === "" ? "" : `:${PORT}`);
+const HOST = BASE_URL + ':3000';
 
 class UsersController {
     // [POST] /users/login
     loginProcess(req, res) {
-        let us = req.body.username;
-        if (req.body.username === "admin") {
-            us = '8742297842';
-        }
+
         fetch(`${HOST}/api/users/login`, {
             method: 'POST',
             headers: {
@@ -16,17 +16,16 @@ class UsersController {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                username: us,
+                email: req.body.email,
                 password: req.body.password
             })
         })
             .then(response => response.json())
             .then(response => {
                 if (response.code === 0) {
-                    return res.redirect(`/users/application/${response.token}`);
+                    return res.redirect(`/`);
                 } else {
-                    req.flash('errorMsg', response.message);
-                    return res.redirect('/users/login');
+                    return res.redirect('login');
                 }
             })
             .catch(err => {
@@ -35,14 +34,14 @@ class UsersController {
     }
     // [GET] /users/login
     login(req, res) {
-        res.render('login')
+        res.render('users/login')
     }
 
     // [POST] /users/register
     registerProcess(req, res) {
         const form = new formidable.IncomingForm();
         form.parse(req, (err, fields, files) => {
-            let { phone, fullName, email, address, birthDate } = fields;
+            let { email, password, username } = fields;
             if (err) {
                 return res.redirect('/Error');
             }
@@ -53,30 +52,18 @@ class UsersController {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    phone: phone,
-                    fullName: fullName,
                     email: email,
-                    address: address,
-                    birthDate: birthDate,
-                    idCardFront: "idCardFront",
-                    idCardBack: "idCardBack",
+                    password: password,
+                    username: username
                 })
             })
                 .then(response => response.json())
                 .then(response => {
+                    console.log(response);
                     if (response.code === 0) {
-                        const { idCardFront, idCardBack } = files;
-                        let us = response.data.username;
-                        console.log(us);
-                        if (us) {
-                            console.log(us);
-                            let [ idCardFrontName, idCardBackName ] = imgIdCardSave(response.data.username, idCardFront, idCardBack);
-                            console.log(idCardFrontName, idCardBackName);
-                        }
-                        return res.redirect(`/users/application/${response.token}`);
+                        return res.redirect(`users/login`);
                     } else {
-                        req.flash('errorMsg', response.message);
-                        return res.redirect('/users/register');
+                        return res.redirect('users/register');
                     }
                 })
                 .catch(err => {
@@ -87,8 +74,7 @@ class UsersController {
 
     // [GET] /users/register
     register(req, res) {
-        let errorMsg = req.flash("errorMsg");
-        res.render('register', {errorMsg})
+        res.render('users/register')
     }
 
     // [GET] /users/application/:token

@@ -1,5 +1,5 @@
 const apiUsersRouter = require('./api/users');
-// const apiBikesRouter = require('./api/bikes');
+const apiBikesRouter = require('./api/bikes');
 
 const usersRouter = require('./views/users');
 const bikesRouter = require('./views/bikes');
@@ -9,7 +9,7 @@ function route(app) {
     // <----- API Router Start ----->
 
     app.use('/api/users', apiUsersRouter);
-    // app.use('/api/bikes', apiBikesRouter);
+    app.use('/api/bikes', apiBikesRouter);
 
     // <----- API Router End ----->
 

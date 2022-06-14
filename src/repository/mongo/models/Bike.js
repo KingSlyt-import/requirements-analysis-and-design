@@ -5,9 +5,9 @@ const BikeSchema = new mongoose.Schema({
     image: { type: String, required: true },
     brand: { type: String, required: true },
     engine: { type: String, required: true },
-    power: { type: Number, required: true },
-    price: { type: Number, required: true },
-    topSpeed: { type: Number },
+    power: { type: String, required: true },
+    price: { type: String, required: true },
+    topSpeed: { type: String },
     createAt: { type: Date, default: Date.now },
     updateAt: { type: Date, default: Date.now }
 });

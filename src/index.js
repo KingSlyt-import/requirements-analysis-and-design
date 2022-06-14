@@ -5,7 +5,6 @@ const path = require('path');
 const express = require('express');
 const { engine } = require("express-handlebars");
 const expressHandlebars = require('express-handlebars');
-const flash = require('express-flash');
 const session = require('express-session');
 const route = require('./routes/index');
 
@@ -17,7 +16,7 @@ const app = express();
 const database = require('./repository/mongo/config/index');
 
 // Directory define
-const viewsDirectoryPath = path.join(__dirname, './views');
+const viewsDirectoryPath = path.join(__dirname, 'views');
 const publicDirectoryPath = path.join(__dirname, './public');
 
 app.engine(
@@ -27,8 +26,8 @@ app.engine(
     })
 );
 
+app.set("views", viewsDirectoryPath);
 app.set("view engine", "hbs");
-app.set("views", "views");
 
 // express config body-parser
 app.use(express.urlencoded({ extended: false }));

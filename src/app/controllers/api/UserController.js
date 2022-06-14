@@ -90,8 +90,8 @@ class UsersController {
                         message: 'Sai tài khoản hoặc mật khẩu, vui lòng đăng nhập lại'
                     });
                 }
-
-                req.session.user = user;
+                
+                req.session.User = user;
                 return res.json({
                     code: 0,
                     message: 'Đăng nhập thành công',
