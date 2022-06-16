@@ -107,74 +107,6 @@ class UsersController {
         return;
     }
 
-    // [GET] /api/users/getUserByUs/:us
-    getUserByUs(req, res, next) {
-        let {us} = req.params;
-
-        User.find({username: us})
-            .select(" -username -password -otp -__v")
-            .then(user => {
-                return res.json({
-                    code: 0,
-                    message: 'Lấy User thành công',
-                    data: user
-                });
-            })
-            .catch(err => {
-                return res.json({
-                    code: 2,
-                    message: err.message
-                });
-            });
-    }
-
-    // [PUT] /api/users/updateStatusUser/:id
-    updateStatusUser(req, res, next) {
-        let {id} = req.params;
-        if (!id) {
-            return res.json({
-                code: 1,
-                message: 'Không có thông tin user'
-            });
-        }
-        let status = req.body.status;
-        if (!status) {
-            return res.json({
-                code: 1,
-                message: 'Không có trạng thái cần cập nhật'
-            });
-        }
-
-        User.findByIdAndUpdate(id, {status}, {
-            new: true
-        })
-            .then((user) => {
-                if (user) {
-                    return res.json({
-                        code: 0,
-                        message: 'Đã cập nhật user thành công',
-                        data: user
-                    });
-                }
-                return res.json({
-                    code: 0,
-                    message: 'Không tìm User'
-                });
-            })
-            .catch(err => {
-                if (err.message.includes('Cast to ObjectId failed')) {
-                    return res.json({
-                        code: 3,
-                        message: 'Không phải Id hợp lệ'
-                    });
-                }
-                return res.json({
-                    code: 3,
-                    message: err.message
-                });
-            })
-    }
-
     // [PUT] /api/users/changePassword/:username
     changePassword(req, res, next) {
 
@@ -249,48 +181,6 @@ class UsersController {
                     message: err.message
                 });
             });
-    }
-
-    // [POST] /api/users/resetPassword
-    resetPassword(req, res, next) {
-        let result = validationResult(req);
-
-        let { confirmPassword } = req.body;
-
-        let { id } = req.user;
-
-        if (result.errors.length === 0) {
-
-            bcrypt.hash(confirmPassword, 10)
-                .then(hashedPassword => {
-                    User.findOneAndUpdate({ _id: id }, { password: hashedPassword })
-                        .then(() => {
-                            return res.json({
-                                code: 0,
-                                message: 'Cập nhật password thành công',
-                            });
-                        })
-                        .catch(err => {
-                            return res.json({
-                                code: 0,
-                                message: err.message
-                            });
-                        });
-                })
-
-            return;
-        }
-
-        let messages = result.mapped();
-        let message = '';
-        for (let mess in messages) {
-            message = messages[mess].msg;
-            break
-        }
-        return res.json({
-            code: 1,
-            message
-        });
     }
 }
 

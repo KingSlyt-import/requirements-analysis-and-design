@@ -1,8 +1,7 @@
 const apiUsersRouter = require('./api/users');
-const apiBikesRouter = require('./api/bikes');
+const apiBikesRouter = require('./api/home');
 
 const usersRouter = require('./views/users');
-const bikesRouter = require('./views/bikes');
 const homeRouter = require('./views/home');
 function route(app) {
     
@@ -17,7 +16,6 @@ function route(app) {
 
     
     app.use('/users', usersRouter);
-    // app.use('/bikes', bikesRouter);
 
     // <----- View Router End ----->
 
